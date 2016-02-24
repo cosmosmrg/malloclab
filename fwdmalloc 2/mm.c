@@ -24,22 +24,28 @@
  ********************************************************/
 team_t team = {
     /* Team name */
-    "ateam",
+    "5680669+5681091",
     /* First member's full name */
-    "Harry Bovik",
+    "Arparnuch Vai-ngamsamer",
     /* First member's email address */
-    "bovik@cs.cmu.edu",
+    "5680669",
     /* Second member's full name (leave blank if none) */
-    "",
+    "Sawarin Sodsangsook",
     /* Second member's email address (leave blank if none) */
-    ""
+    "5691091"
 };
 
 /* single word (4) or double word (8) alignment */
-#define ALIGNMENT 8
+#define single_word 4
+#define double_word 8
+#define CHUNKSIZE (1 << 12)
 
-/* rounds up to the nearest multiple of ALIGNMENT */
-#define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)
+#define PACK(size, alloc) (size | alloc)
+
+#define GET(p) (*(unsigned int *) (p))
+#define PUT(p, val) (*(unsigned int *) (p) = (val))
+/* rounds up to the nearest multiple of double_word */
+#define ALIGN(size) (((size) + (double_word-1)) & ~0x7)
 
 
 #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
@@ -49,7 +55,17 @@ team_t team = {
  */
 int mm_init(void)
 {
-    return 0;
+    int avai = mem_sbrk((single_word)*4)) 
+    if (avai == -1){
+        return -1
+    }
+    
+    PUT(avai, PACK(0,0));
+    PUT(avai + (1*single_word), PACK(double_word, 1)); // prologue header
+    PUT(avai + (2*single_word), PACK(double_word,1)); // prologue footer
+    PUT(avai + (3*single_word), PACK(0,1)); // epilogue 
+
+    return 1;
 }
 
 /* 
@@ -58,10 +74,22 @@ int mm_init(void)
  */
 void *mm_malloc(size_t size)
 {
-    int newsize = ALIGN(size + SIZE_T_SIZE);
-    void *p = mem_sbrk(newsize);
-    if (p == (void *)-1)
-	return NULL;
+    // check if anyfreeblock >=size
+    // if have return the ptr to the first block
+    // if not initial the new block to handle this size
+    // >> check if the size use more than or equal to 8 bytes
+    //      if no make size equal to 8 bytes
+    // ALIGN(size+header+footer) // round it to be divisible by 8
+    int newsize = ALIGN(size + SIZE_T_SIZE); // round up to the should-be malloc size
+    // mem_sbrk(new size)
+    void *p = mem_sbrk(newsize); // Expands the heap and returns the first byte of the allocated area
+
+    // make it to the last block of the heap by get the epiloque out and change the previous ptr 
+    // by looping the previous block to find the previous freelist (also make the previous free block p 
+    // to point to this block) and make the next ptr to null
+    // and return that
+
+    if (p == (void *)-1) )return NULL;
     else {
         *(size_t *)p = size;
         return (void *)((char *)p + SIZE_T_SIZE);
@@ -94,6 +122,7 @@ void *mm_realloc(void *ptr, size_t size)
     mm_free(oldptr);
     return newptr;
 }
+
 
 
 
