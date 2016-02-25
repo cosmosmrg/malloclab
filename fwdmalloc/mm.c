@@ -236,11 +236,18 @@ void *mm_realloc(void *ptr, size_t size)
     size_t copySize;
     
     newptr = mm_malloc(size);
-    if (newptr == NULL)
-      return NULL;
-    copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
-    if (size < copySize)
-      copySize = size;
+    if (newptr == NULL){
+        return NULL;   
+    }
+      
+    copySize = GET_SIZE(HDRP(oldptr)); // get old size
+    if (size < copySize){ // new size < old size
+        // remainder = copySize - size
+        // PUT(oldptr, PACK(copySize, 1)) create new header
+        // PUT(oldptr + size + 1, PACK(copySize, 1)) create new footer
+        // PUT(oldptr, PACK(copySize, 1))
+        copySize = size;
+    }
     memcpy(newptr, oldptr, copySize);
     mm_free(oldptr);
     return newptr;
