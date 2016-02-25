@@ -53,9 +53,10 @@ team_t team = {
 /* 
  * mm_init - initialize the malloc package.
  */
+char *prologue;
 int mm_init(void)
 {
-    int avai = mem_sbrk((single_word)*4)) 
+    char *avai = mem_sbrk((single_word)*4)); 
     if (avai == -1){
         return -1
     }
@@ -64,7 +65,7 @@ int mm_init(void)
     PUT(avai + (1*single_word), PACK(double_word, 1)); // prologue header
     PUT(avai + (2*single_word), PACK(double_word,1)); // prologue footer
     PUT(avai + (3*single_word), PACK(0,1)); // epilogue 
-
+    prologue = avai+double_word;
     return 1;
 }
 
